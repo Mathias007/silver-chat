@@ -1,5 +1,7 @@
 import axios from "axios";
-import Register from "./Register";
+import { UserContextProvider } from "./UserContext";
+
+import Routes from "./Routes";
 
 function App() {
 
@@ -7,7 +9,9 @@ function App() {
   axios.defaults.withCredentials = true;
 
   return (
-    <Register />
+    <UserContextProvider>
+      <Routes />
+    </UserContextProvider>
   )
 }
 
