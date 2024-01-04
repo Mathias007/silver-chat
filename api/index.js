@@ -6,6 +6,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const bcryptjs = require('bcryptjs');
 const ws = require('ws');
+const fs = require('fs');
 
 const User = require('./models/User');
 const Message = require('./models/Message');
@@ -149,6 +150,7 @@ wss.on('connection', (connection, req) => {
     const tokenCookieString = cookies.split(';').find(str => str.startsWith('token='));
     if (tokenCookieString) {
       const token = tokenCookieString.split('=')[1];
+
       if (token) {
         jwt.verify(token, jwtSecret, {}, (err, userData) => {
           if (err) throw err;
@@ -164,6 +166,7 @@ wss.on('connection', (connection, req) => {
     const messageData = JSON.parse(message.toString());
     const {recipient, text, file} = messageData;
     let filename = null;
+
     if (file) {
       console.log('size', file.data.length);
       const parts = file.name.split('.');
@@ -175,22 +178,25 @@ wss.on('connection', (connection, req) => {
         console.log('file saved:'+path);
       });
     }
+
     if (recipient && (text || file)) {
       const messageDoc = await Message.create({
-        sender:connection.userId,
+        sender: connection.userId,
         recipient,
         text,
         file: file ? filename : null,
       });
+
       console.log('created message');
+
       [...wss.clients]
         .filter(c => c.userId === recipient)
         .forEach(c => c.send(JSON.stringify({
           text,
-          sender:connection.userId,
+          sender: connection.userId,
           recipient,
           file: file ? filename : null,
-          _id:messageDoc._id,
+          _id: messageDoc._id,
         })));
     }
   });
