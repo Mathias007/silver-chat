@@ -46,7 +46,7 @@ app.get('/messages/:userId', async (req,res) => {
     const {userId} = req.params;
     const userData = await getUserDataFromRequest(req);
     const ourUserId = userData.userId;
-    
+
     const messages = await Message.find({
       sender:{$in:[userId,ourUserId]},
       recipient:{$in:[userId,ourUserId]},
@@ -148,7 +148,7 @@ wss.on('connection', (connection, req) => {
                     text, 
                     sender: connection.userId,
                     recipient,
-                    id: messageDoc._id
+                    _id: messageDoc._id
                 })));
         }
     });
