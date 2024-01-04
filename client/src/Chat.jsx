@@ -3,11 +3,15 @@ import Avatar from "./Avatar";
 import Logo from "./Logo";
 import { UserContext } from "./UserContext";
 
+import { uniqBy } from 'lodash';
+
 export default function Chat() {
     const [ws, setWs] = useState(null);
     const [onlinePeople, setOnlinePeople] = useState({});
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [newMessageText, setNewMessageText] = useState('');
+    const [messages, setMessages] = useState([]);
+
     const { username, id } = useContext(UserContext);
 
     useEffect(() => {
@@ -29,21 +33,30 @@ export default function Chat() {
         const messageData = JSON.parse(e.data);
         if ('online' in messageData) {
             showOnlinePeople(messageData.online)
+        } else if ('text' in messageData) {
+            setMessages(prev => ([...prev, {...messageData}]))
         }
     }
 
     function sendMessage(e) {
         e.preventDefault();
         ws.send(JSON.stringify({
-            message: {
-                recipient: selectedUserId,
-                text: newMessageText,
-            }
+            recipient: selectedUserId,
+            text: newMessageText,
         }));
+        setNewMessageText('');
+        setMessages(prev => ([...prev, {
+            text: newMessageText, 
+            sender: id,
+            recipient: selectedUserId,
+            id: Date.now()
+        }]));
     }
 
     const onlinePeopleExcludingOurUser = {...onlinePeople};
         delete onlinePeopleExcludingOurUser[id];
+
+    const messagesWithoutDuplicates = uniqBy(messages, 'id');
 
     return (
         <div className="flex h-screen">
@@ -67,6 +80,20 @@ export default function Chat() {
                     {!selectedUserId && (
                         <div className="flex h-full items-center justify-center">
                             <div className="text-gray-400">&larr; Select a person from the sidebar</div>
+                        </div>
+                    )}
+                    {!!selectedUserId && (
+                        <div className="relative h-full">
+                            <div className="overflow-y-scroll absolute inset-0">
+                                {messagesWithoutDuplicates.map(message => (
+                                    <div key={message.id} className={(message.sender === id ? "text-right" : "text-left")}>
+                                        <div className={"text-left inline-block p-2  my-2 rounded-md text-sm " + (message.sender === id ? "bg-blue-500 text-white" : "bg-white text-gray-500")}>
+                                            {message.sender}
+                                            {message.text}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
