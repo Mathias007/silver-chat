@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const bcryptjs = require('bcryptjs');
 
 const User = require('./models/User');
 
@@ -11,6 +12,7 @@ dotenv.config();
 mongoose.connect(process.env.DB_CONNECTION_STRING);
 
 const jwtSecret = process.env.JWT_SECRET;
+const bcryptSalt = bcryptjs.genSaltSync(10);
 
 const app = express();
 app.use(express.json());
@@ -34,15 +36,37 @@ app.get('/profile', (req, res) => {
     } else {
         res.status(401).json('no token');
     }
-})
+});
+
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    const foundUser = await User.find({ username });
+    if (foundUser) {
+        const passOk = bcryptjs.compareSync(password, foundUser.password);
+        if (passOk) {
+            jwt.sign({ userId: foundUser._id, username }, jwtSecret, {}, (error, token) => {
+                if (error) throw error;
+                res.cookie('token', token, { sameSite: 'none', secure: true }).json({
+                    id: foundUser._id,
+                });
+            })
+        }
+    }
+});
 
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        const createdUser = await User.create({ username, password });
-        jwt.sign({ userId: createdUser._id }, jwtSecret, {}, (err, token) => {
-            if (err) throw err;
+        const hashedPassword = bcryptjs.hashSync(password, bcryptSalt);
+
+        const createdUser = await User.create({ 
+            username: username, 
+            password: hashedPassword
+        });
+
+        jwt.sign({ userId: createdUser._id, username }, jwtSecret, {}, (error, token) => {
+            if (error) throw error;
             res.cookie('token', token, { sameSite: 'none', secure: true }).status(201).json({
                 id: createdUser._id,
                 username,
