@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef } from "react";
 import Avatar from "./Avatar";
 import Logo from "./Logo";
 import { UserContext } from "./UserContext";
@@ -13,6 +13,8 @@ export default function Chat() {
     const [messages, setMessages] = useState([]);
 
     const { username, id } = useContext(UserContext);
+
+    const divUnderMessages = useRef();
 
     useEffect(() => {
         const ws = new WebSocket('ws://localhost:4040');
@@ -53,6 +55,13 @@ export default function Chat() {
         }]));
     }
 
+    useEffect(() => {
+        const div = divUnderMessages.current;
+        if (div) {
+            div.scrollIntoView({behavior: 'smooth', block: 'end'});
+        }
+    }, [messages])
+
     const onlinePeopleExcludingOurUser = {...onlinePeople};
         delete onlinePeopleExcludingOurUser[id];
 
@@ -74,6 +83,7 @@ export default function Chat() {
                         </div>
                     </div>
                 ))}
+                <div ref={divUnderMessages}></div>
             </div>
             <div className="flex flex-col bg-blue-50 w-2/3 p-2">
                 <div className="flex-grow">
@@ -84,7 +94,7 @@ export default function Chat() {
                     )}
                     {!!selectedUserId && (
                         <div className="relative h-full">
-                            <div className="overflow-y-scroll absolute inset-0">
+                            <div className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
                                 {messagesWithoutDuplicates.map(message => (
                                     <div key={message.id} className={(message.sender === id ? "text-right" : "text-left")}>
                                         <div className={"text-left inline-block p-2  my-2 rounded-md text-sm " + (message.sender === id ? "bg-blue-500 text-white" : "bg-white text-gray-500")}>
