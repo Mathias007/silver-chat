@@ -4,6 +4,7 @@ import Logo from "./Logo";
 import { UserContext } from "./UserContext";
 
 import { uniqBy } from 'lodash';
+import axios from "axios";
 
 export default function Chat() {
     const [ws, setWs] = useState(null);
@@ -17,10 +18,20 @@ export default function Chat() {
     const divUnderMessages = useRef();
 
     useEffect(() => {
+        connectToWs();
+      }, [selectedUserId]);
+
+    function connectToWs() {
         const ws = new WebSocket('ws://localhost:4040');
         setWs(ws);
         ws.addEventListener('message', handleMessage);
-    }, []);
+        ws.addEventListener('close', () => {
+          setTimeout(() => {
+            console.log('Disconnected. Trying to reconnect.');
+            connectToWs();
+          }, 1000);
+        });
+    }
 
     function showOnlinePeople(peopleArray) {
         const people = {};
@@ -62,6 +73,14 @@ export default function Chat() {
         }
     }, [messages])
 
+    useEffect(() => {
+        if (selectedUserId) {
+          axios.get('/messages/'+selectedUserId).then(res => {
+            setMessages(res.data);
+          });
+        }
+    }, [selectedUserId]);
+    
     const onlinePeopleExcludingOurUser = {...onlinePeople};
         delete onlinePeopleExcludingOurUser[id];
 
