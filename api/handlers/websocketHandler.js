@@ -1,10 +1,17 @@
 import jwt from "jsonwebtoken";
 import fs from "fs";
-import { WebSocketServer } from "ws";
-import MessageModel from "../models/Message.js";
 import path from "path";
 
 import { fileURLToPath } from "url";
+import { WebSocketServer } from "ws";
+
+import MessageModel from "../models/Message.js";
+
+import { ServerPaths } from "../config/ServerPaths.js";
+import { ServerErrors } from "../config/ServerErrors.js";
+
+const { UPLOADS } = ServerPaths;
+const { FILE_SAVED, FILE_SIZE, MESSAGE_CREATED } = ServerErrors;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,14 +87,14 @@ async function handleMessage(message, connection, wss) {
     let filename = null;
 
     if (file) {
-        console.log("size", file.data.length);
+        console.log(`${FILE_SIZE} ${file.data.length}`);
         const parts = file.name.split(".");
         const ext = parts[parts.length - 1];
         filename = Date.now() + "." + ext;
-        const path = __dirname + "/uploads/" + filename;
+        const filePath = path.join(__dirname, `..${UPLOADS}`, filename);
         const bufferData = new Buffer(file.data.split(",")[1], "base64");
-        fs.writeFile(path, bufferData, () => {
-            console.log("file saved:" + path);
+        fs.writeFile(filePath, bufferData, () => {
+            console.log(`${FILE_SAVED} ${filePath}`);
         });
     }
 
@@ -99,7 +106,7 @@ async function handleMessage(message, connection, wss) {
             file: file ? filename : null,
         });
 
-        console.log("created message");
+        console.log(MESSAGE_CREATED);
 
         [...wss.clients]
             .filter((c) => c.userId === recipient)

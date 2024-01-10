@@ -1,6 +1,5 @@
 import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -11,28 +10,31 @@ import userRoutes from "./routes/user.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import { initializeWebSocket } from "./handlers/websocketHandler.js";
 
+import { ConfigVariables } from "./config/ConfigVariables.js";
+import { ServerPaths } from "./config/ServerPaths.js";
+
+const { connectionString, clientURL, jwtSecret, portNumber } = ConfigVariables;
+const { ROOT, UPLOADS } = ServerPaths;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config();
-mongoose.connect(process.env.DB_CONNECTION_STRING);
-
-const jwtSecret = process.env.JWT_SECRET;
+mongoose.connect(connectionString);
 
 const app = express();
-app.use("/uploads", express.static(__dirname + "/uploads"));
+app.use(UPLOADS, express.static(`${__dirname}${UPLOADS}`));
 app.use(express.json());
 app.use(cookieParser());
 app.use(
     cors({
         credentials: true,
-        origin: process.env.CLIENT_URL,
+        origin: clientURL,
     })
 );
 
-app.use("/", userRoutes);
-app.use("/", messageRoutes);
+app.use(ROOT, userRoutes);
+app.use(ROOT, messageRoutes);
 
-const server = app.listen(4040);
+const server = app.listen(portNumber);
 
 initializeWebSocket(server, jwtSecret);
