@@ -6,7 +6,7 @@ export default function Register() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [isLoginOrRegister, setIsLoginOrRegister] = useState("register");
-    const [error, setError] = useState(null); // Dodana zmienna do przechowywania błędu
+    const [error, setError] = useState(null);
 
     const { setUsername: setLoggedInUsername, setId } = useContext(UserContext);
 
@@ -28,7 +28,7 @@ export default function Register() {
             ) {
                 setError(error.response.data.error);
             } else {
-                setError("Wystąpił nieznany błąd.");
+                setError("Some error have happened.");
             }
         }
     }
