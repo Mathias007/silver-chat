@@ -9,9 +9,14 @@ import MessageModel from "../models/Message.js";
 
 import { ServerPaths } from "../config/ServerPaths.js";
 import { ServerErrors } from "../config/ServerErrors.js";
+import { wssIntervals, wssListeners } from "../config/WebSocketVariables.js";
+import { AUTH_TOKEN, BUFFER_FORMAT } from "../config/ConfigVariables.js";
 
 const { UPLOADS } = ServerPaths;
 const { FILE_SAVED, FILE_SIZE, MESSAGE_CREATED } = ServerErrors;
+
+const { CONNECTION, PONG, MESSAGE } = wssListeners;
+const { CONNECTION_TIMER_INTERVAL, DEATH_TIMER_INTERVAL } = wssIntervals;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,7 +24,7 @@ const __dirname = path.dirname(__filename);
 export function initializeWebSocket(server, jwtSecret) {
     const wss = new WebSocketServer({ server });
 
-    wss.on("connection", (connection, req) => {
+    wss.on(CONNECTION, (connection, req) => {
         handleConnection(connection, req, jwtSecret, wss);
     });
 }
@@ -47,10 +52,10 @@ function handleConnection(connection, req, jwtSecret, wss) {
             clearInterval(connection.timer);
             connection.terminate();
             notifyAboutOnlinePeople(wss);
-        }, 1000);
-    }, 5000);
+        }, DEATH_TIMER_INTERVAL);
+    }, CONNECTION_TIMER_INTERVAL);
 
-    connection.on("pong", () => {
+    connection.on(PONG, () => {
         clearTimeout(connection.deathTimer);
     });
 
@@ -59,7 +64,7 @@ function handleConnection(connection, req, jwtSecret, wss) {
     if (cookies) {
         const tokenCookieString = cookies
             .split(";")
-            .find((str) => str.startsWith("token="));
+            .find((str) => str.startsWith(`${AUTH_TOKEN}=`));
         if (tokenCookieString) {
             const token = tokenCookieString.split("=")[1];
 
@@ -74,7 +79,7 @@ function handleConnection(connection, req, jwtSecret, wss) {
         }
     }
 
-    connection.on("message", async (message) => {
+    connection.on(MESSAGE, async (message) => {
         handleMessage(message, connection, wss);
     });
 
@@ -89,10 +94,10 @@ async function handleMessage(message, connection, wss) {
     if (file) {
         console.log(`${FILE_SIZE} ${file.data.length}`);
         const parts = file.name.split(".");
-        const ext = parts[parts.length - 1];
-        filename = Date.now() + "." + ext;
+        const extension = parts[parts.length - 1];
+        filename = `${Date.now()}.${extension}`;
         const filePath = path.join(__dirname, `..${UPLOADS}`, filename);
-        const bufferData = new Buffer(file.data.split(",")[1], "base64");
+        const bufferData = new Buffer(file.data.split(",")[1], BUFFER_FORMAT);
         fs.writeFile(filePath, bufferData, () => {
             console.log(`${FILE_SAVED} ${filePath}`);
         });

@@ -3,18 +3,18 @@ import jwt from "jsonwebtoken";
 
 import UserModel from "../models/User.js";
 
-import { ConfigVariables } from "../config/ConfigVariables.js";
+import {
+    BCRYPT_SALT_ROUNDS,
+    ConfigVariables,
+} from "../config/ConfigVariables.js";
 import { ServerErrors } from "../config/ServerErrors.js";
 
 const { jwtSecret } = ConfigVariables;
 
-const { 
-    REJECT_NO_TOKEN, 
-    REGISTRATION_ERROR, 
-    USER_ALREADY_EXISTS_ERROR 
-} = ServerErrors;
+const { REJECT_NO_TOKEN, REGISTRATION_ERROR, USER_ALREADY_EXISTS_ERROR } =
+    ServerErrors;
 
-const bcryptSalt = bcryptjs.genSaltSync(10);
+const bcryptSalt = bcryptjs.genSaltSync(BCRYPT_SALT_ROUNDS);
 
 export async function getUserDataFromRequest(req) {
     return new Promise((resolve, reject) => {
@@ -31,7 +31,8 @@ export async function getUserDataFromRequest(req) {
     });
 }
 
-export const findUsers = async () => await UserModel.find({}, { _id: 1, username: 1 });
+export const findUsers = async () =>
+    await UserModel.find({}, { _id: 1, username: 1 });
 
 export const loginUser = async (username, password) => {
     const foundUser = await UserModel.findOne({ username });

@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 
+import { DatabaseModels } from "../config/DatabaseModels.js";
+const { USER } = DatabaseModels;
+
 const UserSchema = new mongoose.Schema(
     {
         username: { type: String, unique: true },
@@ -8,6 +11,6 @@ const UserSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-const UserModel = mongoose.model("User", UserSchema);
+const UserModel = mongoose.model(USER, UserSchema);
 
 export default UserModel;
