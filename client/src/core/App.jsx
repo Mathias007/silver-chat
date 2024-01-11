@@ -1,5 +1,5 @@
 import axios from "axios";
-import { UserContextProvider } from "./UserContext";
+import { UserContextProvider } from "../context/UserContext";
 
 import Routes from "./Routes";
 

@@ -1,4 +1,4 @@
-import ChatIcon from "./assets/Chat.svg";
+import ChatIcon from "../assets/Chat.svg";
 
 export default function Logo() {
     return (
