@@ -6,7 +6,7 @@ export default function Contact({ id, username, onClick, selected, online }) {
             onClick={() => onClick(id)}
             key={id}
             className={
-                "border-b border-gray-100 flex items-center gap-2 cursor-pointer " +
+                "border-b border-gray-100 flex items-center gap-2 cursor-pointer transition duration-300 ease-in-out hover:bg-gray-100 " +
                 (selected ? "bg-blue-200" : "")
             }
         >
